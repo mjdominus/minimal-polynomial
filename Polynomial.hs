@@ -3,12 +3,23 @@ module Poly () where
 
 -- A polynomial over some type of coefficients (a)
 -- is just a (finite) sequence of coefficients, starting with the constant term
-data Poly a = Poly [a] deriving Eq
+data Poly a = Poly [a]
 zero = Poly []
 coeff (Poly a) = a
 
--- turn [a,b,c] into [(0,a), (1,b), (2,c)]
-index = zip [0..] 
+-- the zero polynomial has multiple representations:
+-- Poly []; Poly [0]; Poly [0,0]; etc.
+isZero :: (Num a, Eq a) => Poly a -> Bool
+isZero (Poly a) = all (== 0) a
+
+-- Compare term-by-term, except that
+-- if one polynomial is completely empty, just test
+-- the other to see if it is zero
+instance (Num a, Eq a) => Eq (Poly a) where
+  (Poly []) == b         = isZero b
+  a         == (Poly []) = isZero a
+  (Poly (a:as)) == (Poly (b:bs)) =
+     (a == b) && ((Poly as) == (Poly bs))
 
 -- Wow, there sure are a lot of special cases!
 instance (Eq a, Num a, Show a) => Show (Poly a) where
