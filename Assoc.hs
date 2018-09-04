@@ -10,6 +10,10 @@ empty = Assoc []
 isEmpty (Assoc []) = True
 isEmpty _ = False
 
+keys (Assoc as) = map fst as
+vals (Assoc as) = map snd as
+kvps (Assoc as) = as
+
 -- apply a function to just the key
 -- or to just the value
 key f = f . fst
