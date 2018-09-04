@@ -1,5 +1,5 @@
 
-module Poly () where
+module Polynomial where
 
 -- A polynomial over some type of coefficients (a)
 -- is just a (finite) sequence of coefficients, starting with the constant term
@@ -68,7 +68,6 @@ shift n (Poly a) = Poly $ (take n $ repeat 0) ++ a
 -- Multiply polynomial by scalar c
 scale c (Poly a) = Poly $ (map (* c) a)
 
-
 instance (Eq a, Num a) => (Num (Poly a)) where
   negate (Poly cs)     = Poly (map negate cs)
   abs = undefined
@@ -81,18 +80,16 @@ instance (Eq a, Num a) => (Num (Poly a)) where
 
   a * b = foldr (+) zero products where
     -- products :: [Poly a]
-    products = map (`scaleBy` b) (termPairs a)
+    products = map (`scaleBy` b) (termPairs a) where
+      -- x^2 - 3 -> [(0,-3), (2,1)]
+      termPairs (Poly a) = termPairs_ 0 a where
+        termPairs_ _ [] = []
+        termPairs_ p (0:cs) = termPairs_ (p+1) cs
+        termPairs_ p (c:cs) = (p, c):termPairs_ (p+1) cs
 
-    -- Multiply a monomial by a polynomial
-    -- scaleBy (p, c) polynomial = polynomial * (cx^p)
-    scaleBy (p, c) = (shift p) . (scale c)
-
-    -- x^2 - 3 -> [(0,-3), (2,1)]
-      
-termPairs (Poly a) = termPairs_ 0 a where
-      termPairs_ _ [] = []
-      termPairs_ p (0:cs) = termPairs_ (p+1) cs
-      termPairs_ p (c:cs) = (p, c):termPairs_ (p+1) cs
+      -- Multiply a monomial by a polynomial
+      -- scaleBy (p, c) polynomial = polynomial * (cx^p)
+      scaleBy (p, c) = (shift p) . (scale c)
 
 -- collect :: Num a => [Poly a] -> Poly a
 -- collect = zipWith (+)
