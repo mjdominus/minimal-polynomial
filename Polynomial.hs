@@ -31,25 +31,6 @@ poly coeffs = Poly (Assoc (filter ((/= 0) . snd) (index 0 (reverse coeffs)))) wh
   index _ [] = []
   index n (a:as) = (n, a):(index (n+1) as)
 
-p0 = poly [1]
-p1 = poly [2]
-p2 = poly [1, 0]
-p3 = poly [1, 1]
-p4 = poly [2, 3]
-p5 = poly [1, 2, 1]
-p6 = poly [-1]
-p7 = poly [-1, 0]
-p8 = poly [-2, 0]
-p9 = poly [-2, -2]
-pa = poly [1, 2, -1]
-pb = poly [1, -2, 1]
-pc = poly [-1, 2, 2]
-pd = poly [-1, 0, -2]
-pe = poly [3, 0, -1]
-pf = poly [0, 3, 0, -1]
-ps = [p0, p1, p2, p3, p4, p5, p6, p7, p8, p9,
-      pa, pb, pc, pd, pe, pf]
-
 -- degree of a polynomial
 -- this depends on a normal form: no leading zeroes
 degree (Poly as) = maximum $ keys as
@@ -94,3 +75,23 @@ instance (Eq a, Num a, Show a) => Show (Poly a) where
 
     ltrim (' ':s) = ltrim s
     ltrim s = s
+
+p0 = poly [1]
+p1 = poly [2]
+p2 = poly [1, 0]
+p3 = poly [1, 1]
+p4 = poly [2, 3]
+p5 = poly [1, 2, 1]
+p6 = poly [-1]
+p7 = poly [-1, 0]
+p8 = poly [-2, 0]
+p9 = poly [-2, -2]
+pa = poly [1, 2, -1]
+pb = poly [1, -2, 1]
+pc = poly [-1, 2, 2]
+pd = poly [-1, 0, -2]
+pe = poly [3, 0, -1]
+pf = poly [0, 3, 0, -1]
+ps = [p0, p1, p2, p3, p4, p5, p6, p7, p8, p9,
+      pa, pb, pc, pd, pe, pf]
+
