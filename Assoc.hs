@@ -2,7 +2,9 @@
 -- Assoc lists
 module Assoc where
 
+import Data.Align
 import Data.Maybe
+import Data.These
 
 -- maps key to values
 data Assoc k v = Assoc [(k,v)] deriving Show
@@ -35,7 +37,9 @@ instance (Eq k, Eq v) => Eq (Assoc k v) where
 
 -- fmap maps over values, but not over keys
 instance Functor (Assoc k) where
-  fmap f (Assoc ls) = Assoc $ map (\(a,b) -> (a, f b)) ls
+  fmap f (Assoc ls) = Assoc $ map (valm f) ls
+
+kfmap f (Assoc ls) = Assoc $ map (keym f) ls
 
 -- folds up values, not keys
 instance Foldable (Assoc k) where
@@ -50,6 +54,8 @@ instance Foldable (Assoc k) where
 as `get` k =
   case as `get_mb` k of Nothing -> undefined
                         Just v  -> v
+
+as `getkvp` k = (k, as `get` k)
 
 -- Assoc k v -> k -> Bool
 as `has` k = isJust $ as `get_mb` k
@@ -67,14 +73,17 @@ remove (Assoc as) k = Assoc $ remove_ as k where
 as `upd` (k,v) = Assoc $ (k,v):rest where
   Assoc rest = remove as k
 
--- lift a one-argument function, such as filter,
--- from lists to assocs
-lift f x = fmap (f x)
--- the same, for two-argument functions
-lift2 f x1 x2 = fmap (f x1 x2)
+-- take a list of keys, and get the corresponding
+-- values in the same order
+gets keys as = map (get as) keys
+-- or a list of (k, v) in the same order
+getkvps :: Eq k => [k] -> Assoc k v -> [(k, v)]
+getkvps keys as = map (getkvp as) keys
+
 
 a1 = empty `upd` (1, "one")
 a2 = a1 `upd` (2, "two")
 a2' = empty `upd` (2, "two") `upd` (1, "one")
 a2'' = a2 `upd` (1, "another one")
 
+fromLists ks vs = Assoc $ zip ks vs

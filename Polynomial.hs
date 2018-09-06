@@ -1,20 +1,24 @@
 
 module Polynomial where
 import Assoc
+import Data.Align
 import Data.List (sortOn)
-
 
 -- A polynomial over some type of coefficients (a)
 -- is just an assoc list of (power, coefficient) pairs
 data Poly a = Poly (Assoc Integer a)
 zero = Poly empty
 assoc (Poly a) = a
+p (Poly a) = a
+sh :: Show a => Poly a -> String
+sh = show . p
 
 is_zero (Poly as) = all (key (== 0)) as
 
 instance Functor Poly where
   fmap f (Poly a) = Poly $ fmap f a
 
+-- This just delegates to the Assoc instance
 instance Eq a => Eq (Poly a) where
   (Poly as) == (Poly bs)    = as == bs
 
