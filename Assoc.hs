@@ -80,6 +80,28 @@ gets keys as = map (get as) keys
 getkvps :: Eq k => [k] -> Assoc k v -> [(k, v)]
 getkvps keys as = map (getkvp as) keys
 
+instance Eq k => Align (Assoc k) where
+  nil = empty
+  align as bs = Assoc $ realign merged_keys as bs  where
+    merged_keys = merge (keys as) (keys bs)
+
+    merge []     rs = rs
+    merge (l:ls) rs = if l `elem` rs then rest else l:rest
+      where rest = merge ls rs
+
+    realign [] aa bb = []
+    realign (k:ks) aa bb = let rest = realign ks aa bb in
+        case (aa `get_mb` k, bb `get_mb` k) of
+          (Nothing, Nothing) -> rest
+          (Just a , Nothing) -> (k, This a):rest
+          (Nothing, Just b)  -> (k, That b):rest
+          (Just a, Just b)   -> (k, These a b): rest
+
+-- Take two assocs, merge them into a single one, as follows:
+-- For keys present in only one, keep the corresponding value
+-- For keys present in both, combine them with f.          
+aZipWith f as bs = fmap (zipThese f) (align as bs)
+  where zipThese = these id id
 
 a1 = empty `upd` (1, "one")
 a2 = a1 `upd` (2, "two")

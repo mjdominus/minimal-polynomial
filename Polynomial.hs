@@ -76,6 +76,10 @@ instance (Eq a, Num a, Show a) => Show (Poly a) where
     ltrim (' ':s) = ltrim s
     ltrim s = s
 
+instance Align Poly where
+  nil = zero
+  align (Poly p1) (Poly p2) = Poly $ align p1 p2
+  
 p0 = poly [1]
 p1 = poly [2]
 p2 = poly [1, 0]
