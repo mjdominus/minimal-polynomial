@@ -76,10 +76,27 @@ instance (Eq a, Num a, Show a) => Show (Poly a) where
     ltrim (' ':s) = ltrim s
     ltrim s = s
 
+scale :: Num c => c -> Poly c -> Poly c
+scale c = fmap (* c)
+
+shift n (Poly a) = Poly $ kfmap (+ n) a
+
 instance Align Poly where
   nil = zero
   align (Poly p1) (Poly p2) = Poly $ align p1 p2
   
+instance (Eq a, Num a) => (Num (Poly a)) where
+  negate     = fmap negate
+  abs = undefined
+  signum = undefined
+  fromInteger = undefined
+  (Poly a) + (Poly b) = Poly $ aZipWith (+) a b
+
+  a * b = foldr (+) zero products where
+    products = map (`scaleBy` b) (monomials a) where
+      monomials (Poly a) = kvps a
+      scaleBy (p, c) = (shift p) . (scale c)
+
 p0 = poly [1]
 p1 = poly [2]
 p2 = poly [1, 0]
