@@ -41,6 +41,11 @@ degree (Poly as) = maximum $ map Term.degree $ keys as
 
 terms (Poly a) = sort $ keys a
 
+isWellFormed (Poly a) = none hasTrailingZeroes (keys a) where
+  none f = not . any f
+  hasTrailingZeroes (Term.Term []) = False
+  hasTrailingZeroes (Term.Term ls) = head (reverse ls) == 0
+  
 -- return the coefficients of a polynomial
 -- in *increasing* term order
 coeffs p@(Poly as) = map (get as) (terms p)
@@ -53,54 +58,54 @@ p3 = poly [1, 2, 1]             -- 1 + 2x + x^2
 -- bleh, we need a better notation
 p4 = Poly $ Assoc [(Term.Term [1,1], 1), (Term.Term [0, 1], 1), (Term.Term [1, 0], 1), (Term.Term [0, 0], 1)]
 
-instance (Eq a, Num a, Show a) => Show (Poly a) where
-  show (Poly as) = ltrim $ concat $ map concat term_strings where
-    term_strings = case map show_a_term $ sorted_normalized_terms as  of
-      [] -> [["0"]]             -- special special case
-      -- otherwise delete leading plus sign
-      (sgn:rest):more_terms ->
+pretty (Poly as) = ltrim $ concat $ map concat term_strings where
+  term_strings = case map show_a_term $ sorted_normalized_terms as  of
+    [] -> [["0"]]             -- special special case
+          -- otherwise delete leading plus sign
+    (sgn:rest):more_terms ->
         if (sgn == plus) then rest:more_terms
         else                  (sgn:rest):more_terms
-      anything_else -> anything_else
-
-    sorted_normalized_terms (Assoc pairs) =
-      sortOn fst $ map norm_term $ pairs   where
-        norm_term (t, c) = (Term.normalize t, c)
+    anything_else -> anything_else
+  sorted_normalized_terms (Assoc pairs) =
+    sortOn fst $ map norm_term $ pairs   where
+      norm_term (t, c) = (Term.normalize t, c)
 
     -- show_a_term (term, coefficient), say (2, 3),
     -- gives back a list of things that look like
     --   ["+", "3", x^2"]
-    show_a_term (_, 0)  = [                           ]
-    show_a_term (Term.Term [], c)
-                        = [sgn c, show (abs c)        ]
-    show_a_term (t, 1)  = [plus,                show t]
-    show_a_term (t, -1) = [minus,               show t]
-    show_a_term (t, c)  = [sgn c, show (abs c), show t]
+  show_a_term (_, 0)  = [                           ]
+  show_a_term (Term.Term [], c)
+                      = [sgn c, show (abs c)        ]
+  show_a_term (t, 1)  = [plus,                Term.str t]
+  show_a_term (t, -1) = [minus,               Term.str t]
+  show_a_term (t, c)  = [sgn c, show (abs c), Term.str t]
 
-    sgn c = if (signum c) == 1 then plus
-            else minus
+  sgn c = if (signum c) == 1 then plus
+          else minus
     
-    plus = " + "
-    minus = " - "
+  plus = " + "
+  minus = " - "
 
-    ltrim (' ':s) = ltrim s
-    ltrim s = s
+  ltrim (' ':s) = ltrim s
+  ltrim s = s
 
--- scale :: Num c => c -> Poly c -> Poly c
--- scale c = fmap (* c)
+instance (Eq a, Num a, Show a) => Show (Poly a) where
+  show = sh
 
--- shift n (Poly a) = Poly $ kfmap (+ n) a
+scale :: Num c => c -> Poly c -> Poly c
+scale c = fmap (* c)
 
--- instance Align Poly where
---   nil = zero
---   align (Poly p1) (Poly p2) = Poly $ align p1 p2
+instance Align Poly where
+  nil = zero
+  align (Poly p1) (Poly p2) = Poly $ align p1 p2
   
--- instance (Eq a, Num a) => (Num (Poly a)) where
---   negate     = fmap negate
---   abs = undefined
---   signum = undefined
---   fromInteger = undefined
---   (Poly a) + (Poly b) = Poly $ aZipWith (+) a b
+instance (Eq a, Num a) => (Num (Poly a)) where
+  negate     = fmap negate
+  abs = undefined
+  signum = undefined
+  fromInteger = undefined
+  (Poly a) + (Poly b) = Poly $ aZipWith (+) a b
+  (*) = undefined
 
 --   a * b = foldr (+) zero products where
 --     products = map (`scaleBy` b) (monomials a) where

@@ -5,12 +5,16 @@ module Assoc where
 import Data.Align
 import Data.Maybe
 import Data.These
+import Data.List (nub)
 
 -- maps key to values
 data Assoc k v = Assoc [(k,v)] deriving Show
 empty = Assoc []
 isEmpty (Assoc []) = True
 isEmpty _ = False
+
+-- apply f to the list of pairs that underlies the assoc
+lift f (Assoc as) = Assoc $ f as
 
 keys (Assoc as) = map fst as
 vals (Assoc as) = map snd as
@@ -28,18 +32,24 @@ valm f = \(k, v) -> (  k, f v)
 
 kvm f g = \(k, v) -> (f k, g v)
 
+-- This doesn't work properly in the presence of duplicate keys
 instance (Eq k, Eq v) => Eq (Assoc k v) where
   Assoc [] == Assoc []   = True
   Assoc _  == Assoc []   = False
   Assoc as == Assoc ((bk,bv):bs) =
     get_mb (Assoc as) bk == Just bv   &&
     ((Assoc as) `remove` bk) == (Assoc bs)
+-- Might be easier to use Align?
+instance (Eq k, Eq v) => Eq (Assoc k v) where
+  as == bs = 
 
 -- fmap maps over values, but not over keys
 instance Functor (Assoc k) where
-  fmap f (Assoc ls) = Assoc $ map (valm f) ls
+  fmap f = lift $ map (valm f)
 
-kfmap f (Assoc ls) = Assoc $ map (keym f) ls
+-- This transforms keys instead, leaving values the same
+kfmap :: (t -> k) -> Assoc t v -> Assoc k v
+kfmap f = lift $ map (keym f)
 
 -- folds up values, not keys
 instance Foldable (Assoc k) where
@@ -62,7 +72,7 @@ as `has` k = isJust $ as `get_mb` k
 
 -- Assoc k v -> k -> Assoc k v
 -- (Assoc []) `remove` k = empty
-remove (Assoc as) k = Assoc $ remove_ as k where
+assoc `remove` k = lift (`remove_` k) assoc where
   remove_ [] _ = []
   remove_ ((k',v):as) k =
     if k == k' then rest
@@ -70,8 +80,16 @@ remove (Assoc as) k = Assoc $ remove_ as k where
          where rest = remove_ as k
 
 -- Assoc k v -> (k, v) -> Assoc k v
-as `upd` (k,v) = Assoc $ (k,v):rest where
-  Assoc rest = remove as k
+as `upd` (k,v) =
+  Assoc $ (k,v):rest where
+    Assoc rest = remove as k
+-- Why didn't I just use
+as `upd'` pair = lift (pair :) as
+-- Maybe for easier debugging during development?
+
+-- This version is broken.  Can QuickCheck figure that out?
+-- if (length rest == 4) then empty else Assoc $ (k,v):rest where
+-- Yes, it totally did.
 
 -- take a list of keys, and get the corresponding
 -- values in the same order
@@ -80,14 +98,11 @@ gets keys as = map (get as) keys
 getkvps :: Eq k => [k] -> Assoc k v -> [(k, v)]
 getkvps keys as = map (getkvp as) keys
 
+-- 
 instance Eq k => Align (Assoc k) where
   nil = empty
   align as bs = Assoc $ realign merged_keys as bs  where
-    merged_keys = merge (keys as) (keys bs)
-
-    merge []     rs = rs
-    merge (l:ls) rs = if l `elem` rs then rest else l:rest
-      where rest = merge ls rs
+    merged_keys = nub $ (keys as) ++ (keys bs)
 
     realign [] aa bb = []
     realign (k:ks) aa bb = let rest = realign ks aa bb in
