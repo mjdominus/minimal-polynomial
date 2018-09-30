@@ -39,9 +39,15 @@ instance (Eq k, Eq v) => Eq (Assoc k v) where
   Assoc as == Assoc ((bk,bv):bs) =
     get_mb (Assoc as) bk == Just bv   &&
     ((Assoc as) `remove` bk) == (Assoc bs)
+
 -- Might be easier to use Align?
-instance (Eq k, Eq v) => Eq (Assoc k v) where
-  as == bs = 
+-- (I don't even know what align would do in the presence of duplicate keys)
+-- instance (Eq k, Eq v) => Eq (Assoc k v) where
+--   as == bs = foldr equa_l True (vals $ align as bs) where
+--     equa_l _           False = False
+--     equa_l (This _)    _     = False
+--     equa_l (That _)    _     = False
+--     equa_l (These p q) _     = p == q
 
 -- fmap maps over values, but not over keys
 instance Functor (Assoc k) where
